@@ -1,7 +1,12 @@
 # Hidato Puzzle Solver
-Hidato puzzle solver using the Z3 SMT solver.
-Hidato is an Israeli puzzle game.
 
+Hidato puzzle solver using the Z3 SMT solver.<br />
+Hidato is an Israeli puzzle game.<br />
+Solving hidato, similarly to sudoku, [is an NP-complete problem](https://www.nearly42.org/cstheory/hidato-is-np-complete/)
+
+## Instructions
+Currently, the solver only works with regular-hexagon-shaped boards.<br />
+Support for other board shapes will be added in the future.<br />
 First, choose the board size, i.e. the length of each size of the hexagon:
 ```
 Board size: 6
