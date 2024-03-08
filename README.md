@@ -7,7 +7,7 @@ Solving hidato, similarly to sudoku, [is an NP-complete problem](https://www.nea
 ## Instructions
 Currently, the solver only works with regular-hexagon-shaped boards.<br />
 Support for other board shapes will be added in the future.<br />
-First, choose the board size, i.e. the length of each size of the hexagon:
+First, choose the board size, i.e. the length of the hexagon's sides:
 ```
 Board size: 6
 ```
