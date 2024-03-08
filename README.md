@@ -1,3 +1,4 @@
+# Hidato Puzzle Solver
 Hidato puzzle solver using the Z3 SMT solver.
 Hidato is an Israeli puzzle game.
 
