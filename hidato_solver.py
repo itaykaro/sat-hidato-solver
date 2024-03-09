@@ -11,43 +11,39 @@ while not k.isdigit():
     k = input("Board size: ")
 k = int(k)
 s = Solver()
-t_size = 4 * (k - 1)
+t_height = 2 * (k - 1)
+t_width = 4 * (k - 1)
 max_num = 3 * k * (k - 1) + 1
 
 def print_board(board, highlight=None, solution=False, title=True):
     print(("Solution:\n" if solution else "Board:\n") if title else "")
-    for row in range(len(board)):
+    for row in range(t_height + 1):
         rowtext = ""
-        for col in range(len(board)):
+        for col in range(t_width + 1):
             text = "X" if highlight and (row, col) == highlight else board[row][col]
             padding = len(str(max_num)) - len(text)
             padding_left = ' ' * int(padding / 2)
             padding_right = ' ' * (int(padding / 2) + (padding % 2))
             rowtext += padding_left + text + padding_right
-        if not rowtext.isspace():
-            print(rowtext)
+        print(rowtext)
     print()
 
-def neighbors(pair):
-    i, j = pair
-    potentials =  [(i, j-2), (i, j+2), (i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (i + 1, j + 1)]
-    neighbors = [(x, y) for (x,y) in potentials if (x, y) in pairs]
-    return neighbors
-
-first = 0
-last = t_size
-
-#  build pairs list
 pairs = []
-for i in range (int(t_size / 2), k - 2, -1):
+holes = []
+
+# build pairs list
+first = 0
+last = t_width
+
+for i in range(int(t_height / 2), -1, -1):
     for j in range(first, last + 1, 2):
         pairs.append((i, j))
     first += 1
     last -= 1
 
 first = 1
-last = t_size - 1
-for i in range (int(t_size / 2) + 1, t_size - k + 2):
+last = t_width - 1
+for i in range(int(t_height / 2) + 1, t_height + 1):
     for j in range(first, last + 1, 2):
         pairs.append((i, j))
     first += 1
@@ -56,19 +52,9 @@ for i in range (int(t_size / 2) + 1, t_size - k + 2):
 pairs.sort(key=lambda pair: pair[0])
 
 # build board
-board = [[' '] * (t_size + 1) for _ in range(t_size + 1)]
+board = [[' '] * (t_width + 1) for _ in range(t_height + 1)]
 for (i, j) in pairs:
     board[i][j] = '-'
-
-# make vars
-vars = [[None] * (t_size + 1) for _ in range(t_size + 1)]
-for (i, j) in pairs:
-    vars[i][j] = Int(f'pair_({i}, {j})') 
-
-# add constraints - values should be distinct and within the range of [1, max_num]
-s.add(Distinct([vars[i][j] for (i, j) in pairs]))
-s.add(And([vars[i][j] > 0 for (i, j) in pairs]))
-s.add(And([vars[i][j] <= max_num for (i, j) in pairs]))
 
 # fill user input
 exists = []
@@ -78,37 +64,66 @@ while index < len(pairs):
     while True:
         clear()
         if board[i][j] != '-':
-            exists.remove(int(board[i][j]))
+            if board[i][j] == '0':
+                holes.remove((i, j))
+            else:
+                exists.remove(int(board[i][j]))
             board[i][j] = '-'
         print_board(board, (i, j))
-        value = input("Enter number for the marked spot (-1 to go back): ")
+        value = input("Enter a number for the marked spot (-1 to go back, 0 for hole): ")
         if not value:
             index += 1
             break
         if value == '-1':
-            if index == 0: continue
+            if index == 0: 
+                continue
             index -= 1
             break
         if value.isdigit():
             value = int(value)
+            if value < 0 or value > max_num or value in exists:
+                continue 
+            if value == 0:
+                holes.append((i ,j))
             if value >= 1 and value <= max_num and value not in exists:
                 exists.append(value)
-                board[i][j] = str(value)
-                index += 1
-                break
-
-# add constraints - fixed values
-for (i, j) in pairs:
-    if board[i][j] != '-':
-        s.add(vars[i][j] == board[i][j])
+            board[i][j] = str(value)
+            index += 1
+            break
 
 clear()
 print_board(board)
 print("Solving...")
 
-# add constraints - for each cell, if its value isn't max_num, one of its neighbors must be its successor
-for (i, j) in pairs:
-    s.add(Or(Or([vars[n_i][n_j] == (vars[i][j] + 1) for (n_i, n_j) in neighbors((i, j))]), vars[i][j] == max_num))
+pairs_without_holes = [pair for pair in pairs if pair not in holes]
+max_num -= len(holes)
+
+def neighbors(pair):
+    i, j = pair
+    potentials =  [(i, j-2), (i, j+2), (i - 1, j - 1), (i - 1, j + 1), (i + 1, j - 1), (i + 1, j + 1)]
+    neighbors = [(x, y) for (x,y) in potentials if (x, y) in pairs_without_holes]
+    return neighbors
+
+# make vars
+vars = [[None] * (t_width + 1) for _ in range(t_height + 1)]
+for (i, j) in pairs_without_holes:
+        vars[i][j] = Int(f'pair_({i}, {j})') 
+
+# constraints:
+# values should be distinct (except for holes) and within the range of [1, max_num]
+s.add(Distinct([vars[i][j] for (i, j) in pairs_without_holes]))
+s.add(And([vars[i][j] > 0 for (i, j) in pairs_without_holes]))
+s.add(And([vars[i][j] <= max_num for (i, j) in pairs_without_holes]))
+# fixed values
+for (i, j) in pairs_without_holes:
+    if board[i][j] != '-':
+        s.add(vars[i][j] == board[i][j])
+# for each cell, if its value isn't max_num, one of its neighbors must be its successor
+for (i, j) in pairs_without_holes:
+        s.add(
+            Or(
+                Or([vars[n_i][n_j] == (vars[i][j] + 1) for (n_i, n_j) in neighbors((i, j))]),
+                vars[i][j] == max_num))
 
 if str(s.check()) == "unsat":
     print("No solution!")
@@ -118,5 +133,5 @@ else:
     print("Solved!")
     m = s.model()
     for (i, j) in pairs:
-        board[i][j] = str(m.eval(vars[i][j]))
+        board[i][j] = "0" if (i, j) in holes else str(m.eval(vars[i][j]))
     print_board(board, solution=True)
