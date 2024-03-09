@@ -7,6 +7,7 @@ Solving hidato, similarly to sudoku, [is an NP-complete problem](https://www.nea
 ## Instructions
 Currently, the solver only works with regular-hexagon-shaped boards.<br />
 Support for other board shapes will be added in the future.<br />
+The solver can now handle "holes", insert 0 for a spot to make a hole.
 First, choose the board size, i.e. the length of the hexagon's sides:
 ```
 Board size: 6
