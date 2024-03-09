@@ -4,13 +4,13 @@ from z3 import *
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-clear()
-k = input("Board size: ")
-while not k.isdigit() or int(k) < 2:
-    os.system('cls' if os.name == 'nt' else 'clear')
+while True:
+    clear()
     k = input("Board size: ")
+    if k.isdigit() and int(k) >= 2:
+        break
+
 k = int(k)
-s = Solver()
 t_height = 2 * (k - 1)
 t_width = 4 * (k - 1)
 max_num = 3 * k * (k - 1) + 1
@@ -108,6 +108,8 @@ def neighbors(pair):
 vars = [[None] * (t_width + 1) for _ in range(t_height + 1)]
 for (i, j) in pairs_without_holes:
         vars[i][j] = Int(f'pair_({i}, {j})') 
+
+s = Solver()
 
 # constraints:
 # values should be distinct (except for holes) and within the range of [1, max_num]
