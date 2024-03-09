@@ -6,7 +6,7 @@ def clear():
 
 clear()
 k = input("Board size: ")
-while not k.isdigit():
+while not k.isdigit() or int(k) < 2:
     os.system('cls' if os.name == 'nt' else 'clear')
     k = input("Board size: ")
 k = int(k)
