@@ -130,10 +130,14 @@ for (i, j) in pairs_without_holes:
 if str(s.check()) == "unsat":
     print("No solution!")
 else:
-    clear()
-    print_board(board)
-    print("Solved!")
-    m = s.model()
-    for (i, j) in pairs:
-        board[i][j] = "0" if (i, j) in holes else str(m.eval(vars[i][j]))
-    print_board(board, solution=True)
+    try:
+        m = s.model()
+    except:
+        print("Terminated")
+    else:
+        clear()
+        print_board(board)
+        print("Solved!")
+        for (i, j) in pairs:
+            board[i][j] = "0" if (i, j) in holes else str(m.eval(vars[i][j]))
+        print_board(board, solution=True)
