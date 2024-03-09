@@ -29,4 +29,5 @@ print("Solving...")
 if solver.solve_board() == False:
     print("No solution!")
 else:
+    print("Solved!\n")
     solver.print_board(title="Solution:")

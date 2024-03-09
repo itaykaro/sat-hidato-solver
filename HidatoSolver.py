@@ -130,7 +130,7 @@ class HidatoSolver:
         self.max_num = len(self.pairs)
 
     def print_board(self, highlight=None, title="Board:"):
-        print(title)
+        print(title + "\n")
         for row in range(len(self.board)):
             rowtext = ""
             for col in range(len(self.board[row])):
