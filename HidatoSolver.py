@@ -1,8 +1,6 @@
 import os
 import requests
-from z3 import *
-
-
+from sat import SAT
 
 class HidatoSolver:
     def __init__(self):
@@ -149,35 +147,37 @@ class HidatoSolver:
         return neighbors
 
     def solve_board(self):
-        # make vars
-        vars = [[None] * (len(self.board[0])) for _ in range(len(self.board))]
-        for (i, j) in self.pairs:
-                vars[i][j] = Int(f'pair_({i}, {j})') 
+        sat = SAT()
 
-        s = Solver()
-        # constraints:
-        # values should be distinct (except for self.holes) and within the range of [1, max_num]
-        s.add(Distinct([vars[i][j] for (i, j) in self.pairs]))
-        s.add(And([vars[i][j] > 0 for (i, j) in self.pairs]))
-        s.add(And([vars[i][j] <= self.max_num for (i, j) in self.pairs]))
+        # must have a value
+        for pair in self.pairs:
+            sat.add_clause([sat[pair, n] for n in range(1, self.max_num + 1)])
+
+        # distinct
+        for i in range(len(self.pairs)):
+            for j in range(0, i):
+                for n in range(1, self.max_num + 1):
+                    sat.add_clause([-sat[self.pairs[i], n], -sat[self.pairs[j], n]])
+
         # fixed values
-        for (i, j) in self.pairs:
+        for pair in self.pairs:
+            i, j = pair
             if self.board[i][j] != '-':
-                s.add(vars[i][j] == self.board[i][j])
-        # for each cell, if its value isn't max_num, one of its neighbors must be its successor
-        for (i, j) in self.pairs:
-                s.add(
-                    Or(
-                        Or([vars[n_i][n_j] == (vars[i][j] + 1) for (n_i, n_j) in self.neighbors((i, j))]),
-                        vars[i][j] == self.max_num))
+                sat.add_clause([sat[pair, int(self.board[i][j])]])
 
-        if str(s.check()) == "unsat":
+        # neighbor successor
+        for pair in self.pairs:
+            for n in range(1, self.max_num):
+                clause = [sat[pair, self.max_num], -sat[pair, n]]
+                for neighbor in self.neighbors(pair):
+                    clause.append(sat[neighbor, n + 1])
+                sat.add_clause(clause)
+
+        if not sat.solve():
             return False
-        else:
-            try:
-                m = s.model()
-            except:
-                print("Terminated")
-            else:
-                for (i, j) in self.pairs:
-                    self.board[i][j] = "0" if (i, j) in self.holes else str(m.eval(vars[i][j]))
+        
+        for pair in self.pairs:
+            for n in range (1, self.max_num + 1):
+                if sat.value(pair, n):
+                    i, j = pair
+                    self.board[i][j] = str(n)  
