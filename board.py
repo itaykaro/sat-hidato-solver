@@ -2,7 +2,7 @@ import os
 import requests
 from sat import SAT
 
-class HidatoSolver:
+class Board:
     def __init__(self):
         self.board = []
         self.pairs = []
@@ -149,6 +149,8 @@ class HidatoSolver:
     def solve_board(self):
         sat = SAT()
 
+        # CONSTRAINTS
+
         # must have a value
         for pair in self.pairs:
             sat.add_clause([sat[pair, n] for n in range(1, self.max_num + 1)])
@@ -173,11 +175,63 @@ class HidatoSolver:
                     clause.append(sat[neighbor, n + 1])
                 sat.add_clause(clause)
 
+        # END CONSTRAINTS
+
+        # solve
         if not sat.solve():
-            return False
+            return 1
         
+        # VERIFY
+
+        # must have a value
+        for pair in self.pairs:
+            if not any([sat.value(pair, n) for n in range(1, self.max_num + 1)]):
+                return 1
+
+        # distinct
+        for i in range(len(self.pairs)):
+            for j in range(0, i):
+                for n in range(1, self.max_num + 1):
+                    if sat.value(self.pairs[i], n) and sat.value(self.pairs[j], n):
+                        return 1
+
+        # fixed values
+        for pair in self.pairs:
+            i, j = pair
+            if self.board[i][j] != '-':
+                if not sat.value(pair, int(self.board[i][j])):
+                    return 1
+
+        # neighbor successor
+        for pair in self.pairs:
+            if not sat.value(pair, self.max_num):
+                for n in range(1, self.max_num):
+                    if sat.value(pair, n) and not any(sat.value(neighbor, n + 1) for neighbor in self.neighbors(pair)):
+                        return 1
+        
+        # END VERIFY
+
+        # update solution
         for pair in self.pairs:
             for n in range (1, self.max_num + 1):
                 if sat.value(pair, n):
                     i, j = pair
                     self.board[i][j] = str(n)  
+
+        # CHECK IF LEGAL BOARD
+        
+        # add clause to make a different solution - atleast one pair has a different value
+        clause = []
+        for pair in self.pairs:
+            for n in range (1, self.max_num + 1):
+                if sat.value(pair, n):
+                    clause.append(-sat[pair, n])
+        sat.add_clause(clause)
+
+        # if there is another solution, the board is illegal
+        if sat.solve():
+            return 2
+        
+        # END CHECK IF LEGAL BOARD
+
+        return 0

@@ -1,10 +1,10 @@
 import re
-from HidatoSolver import HidatoSolver
+from board import Board
 
-solver = HidatoSolver()
+board = Board()
 
 while True:
-    solver.clear()
+    board.clear()
     print("Menu:\n1) Input board manually\n2) Fetch board from hidato.com")
     option = input("Choose option: ")
     if option in ['1', '2']:
@@ -12,22 +12,25 @@ while True:
         break
 
 if option == 1:
-    solver.get_board_from_input()
+    board.get_board_from_input()
 elif option == 2:
     while True:
-        solver.clear()
+        board.clear()
         board_id = input("Board id (h-x-xxxxxx): ")
         if bool(re.match(r'^h-[1-6]-[0-9]{6}$', board_id.strip())):
             break
-    solver.clear()
+    board.clear()
     print("Fetching board...")
-    solver.get_board_from_web(board_id)
+    board.get_board_from_web(board_id)
 
-solver.clear()
-solver.print_board()
+board.clear()
+board.print_board()
 print("Solving...")
-if solver.solve_board() == False:
+res = board.solve_board()
+if res == 1:
     print("No solution!")
+elif res == 2:
+    print("Illegal board!")
 else:
     print("Solved!\n")
-    solver.print_board(title="Solution:")
+    board.print_board(title="Solution:")
