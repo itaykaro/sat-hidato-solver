@@ -1,6 +1,6 @@
 import os
 import requests
-from sat import SAT
+from .sat import SAT
 
 class Board:
     def __init__(self):

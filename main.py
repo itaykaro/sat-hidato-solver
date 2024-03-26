@@ -1,5 +1,5 @@
 import re
-from board import Board
+from utils import Board
 
 board = Board()
 
